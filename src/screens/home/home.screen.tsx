@@ -1,9 +1,11 @@
+/* eslint-disable react-native/no-inline-styles */
 import { ApiResponse } from 'apisauce';
 import React, { memo, useEffect, useState } from 'react';
-import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { useAppDispatch, useAppSelector } from 'src/hooks/hooks';
-import { counterSlice } from 'src/redux/counter/slice';
-import api from 'src/services/apisauce';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import Button from 'src/components/Button/Button';
+import { useAppDispatch, useAppSelector } from 'src/hooks/Hooks';
+import { useNavigation } from '@react-navigation/native';
+import { AppRoute } from 'src/navigator/app.route';
 
 type Props = {
   navigation: any;
@@ -14,31 +16,19 @@ type A = {
   data: { email: string }[];
 };
 
-const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
-  const counter = useAppSelector((state) => state.counter.value);
-  const dispatch = useAppDispatch();
-  const [a, setA] = useState<any>();
-
-  const doIncrement = () => {
-    dispatch(counterSlice.actions.increment());
+const HomeScreen: React.FC<Props> = memo(() => {
+  const navigation = useNavigation();
+  const navigateQuestionaire = () => {
+    navigation.navigate(AppRoute.QUESTIONAIRE);
   };
-
-  useEffect(() => {
-    async function av() {
-      const response: ApiResponse<A> = await api.get('/users?page=2');
-      console.log('Tube response:', response);
-      setA(response.data?.data[0].email);
-    }
-    av();
-  }, []);
-
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <Text>{a}</Text>
-        {/* <Text>{a}</Text> */}
-      </View>
-      <Button onPress={doIncrement} title="Increase"></Button>
+      <Button
+        onPress={navigateQuestionaire}
+        title="Start"
+        style={{
+          marginHorizontal: 20,
+        }}></Button>
     </SafeAreaView>
   );
 });
@@ -46,7 +36,8 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    justifyContent: 'space-evenly',
+    backgroundColor: '#fff',
   },
 });
 
