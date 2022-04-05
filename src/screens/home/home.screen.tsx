@@ -1,7 +1,13 @@
+/* eslint-disable react-native/no-inline-styles */
 import { ApiResponse } from 'apisauce';
 import React, { memo, useEffect, useState } from 'react';
-import { Button, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { useAppDispatch, useAppSelector } from 'src/hooks/hooks';
+import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import Button from 'src/components/Button/Button';
+import { useAppDispatch, useAppSelector } from 'src/hooks/Hooks';
+import { useNavigation } from '@react-navigation/native';
+import { AppRoute } from 'src/navigator/app.route';
+import CheckboxList from 'rn-checkbox-list';
+import { Item } from 'react-native-paper/lib/typescript/components/List/List';
 import { counterSlice } from 'src/redux/counter/slice';
 import api from 'src/services/apisauce';
 import { LOCAL_STORAGE_KEYS } from 'src/utils/constants';
@@ -20,7 +26,11 @@ type A = {
   data: { email: string }[];
 };
 
-const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
+const HomeScreen: React.FC<Props> = memo(({ route }) => {
+  const navigation = useNavigation();
+  const navigateQuestionaire = () => {
+    navigation.navigate(AppRoute.QUESTIONAIRE);
+  };
   let questionnaireEngine: QuestionnaireEngine;
 
   const [answerData, setAnswerData] = useState<{
@@ -154,7 +164,13 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View></View>
+      <Button
+        onPress={navigateQuestionaire}
+        title="Start"
+        style={{
+          marginHorizontal: 20,
+          marginBottom: 50,
+        }}></Button>
     </SafeAreaView>
   );
 });
@@ -162,7 +178,8 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    justifyContent: 'space-evenly',
+    backgroundColor: '#fff',
   },
 });
 
