@@ -4,15 +4,18 @@
 import { useNavigation } from '@react-navigation/native';
 import { t } from 'i18next';
 import React, { memo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, TextInputBase, View } from 'react-native';
 import { CheckBox } from 'react-native-elements';
 // import StepIndicator from 'react-native-step-indicator';
 import Swiper from 'react-native-swiper';
 import Button from 'src/components/Button/Button';
 import Space from 'src/components/Space';
+import TextInput from 'src/components/TextInput';
 import TextRegular from 'src/components/TextRegular';
 import { colors } from 'src/utils/colors';
 import TextBold from '../../components/TextBold';
+import DatePicker from 'react-native-date-picker';
+import moment from 'moment';
 
 const QUESTION = [
   {
@@ -20,29 +23,32 @@ const QUESTION = [
     d: '',
     a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
     c: null,
+    type: 'Choice',
   },
   {
-    q: 'How often do you have difficulty getting things in order when you have to do a task that requires organization?',
+    q: 'How often do you feel restless or fidgety?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['Yes', 'No'],
     c: null,
+    type: 'YesNo',
   },
   {
     q: 'How often do you have problems remembering appointments or obligations?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['DD/MM/YYYY'],
     c: null,
+    type: 'Date',
   },
   {
     q: 'How often do you make careless mistakes when you have to work on a boring or difficult project?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['Input'],
     c: null,
   },
   {
     q: 'How often do you have difficulty keeping your attention when you are doing boring or repetitive work?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['Yes', 'No'],
     c: null,
   },
   {
@@ -54,7 +60,7 @@ const QUESTION = [
   {
     q: 'How often do you misplace or have difficulty finding things at home or at work?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['Input'],
     c: null,
   },
   {
@@ -66,7 +72,7 @@ const QUESTION = [
   {
     q: 'How often do you feel restless or fidgety?',
     d: '',
-    a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
+    a: ['Yes', 'No'],
     c: null,
   },
 ];
@@ -74,7 +80,15 @@ const Questionaire = memo(() => {
   const [currentPage, setCurrentPage] = React.useState<number>(0);
   const navigation = useNavigation();
   const [question, setQuestion] = useState(QUESTION);
-
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
+  const onChangeDate = (selectedDate: any) => {
+    setShow(false);
+    setDate(selectedDate);
+  };
+  const onOpenDatePicker = () => {
+    setShow(true);
+  };
   const customStyles = {
     stepIndicatorSize: 25,
     currentStepIndicatorSize: 30,
@@ -106,35 +120,74 @@ const Questionaire = memo(() => {
   const renderViewPagerPage = (data: any, index: number) => {
     const renderItem = (item: any, i: any) => {
       return (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderColor: colors.light_gray,
-            borderWidth: 1,
-            marginBottom: 10,
-            borderRadius: 20,
-            backgroundColor: colors.white,
-            paddingVertical: 5,
-          }}>
-          <CheckBox
-            checked={question[index].c === i}
-            checkedColor={colors.primaryColor}
-            checkedIcon="dot-circle-o"
-            uncheckedIcon="circle-o"
-            size={30}
-            onPress={() => {
-              const temp = [...question];
-              temp[index].c = i;
-              setQuestion(temp);
-            }}
-          />
-          <TextRegular>{item}</TextRegular>
+        <View>
+          {(() => {
+            switch (item) {
+              case 'Input':
+                return (
+                  <View style={styles.inputView}>
+                    <TextInput placeholder={'Your answer'}></TextInput>
+                  </View>
+                );
+              case 'DD/MM/YYYY':
+                return (
+                  <View style={styles.scheduleView}>
+                    <TextInput
+                      value={moment(date).format('DD/MM/YYYY')}
+                      placeholder={'DD/MM/YYYY'}
+                      onTouchStart={onOpenDatePicker}
+                      editable={false}
+                      // style={styles.datePicker}
+                    />
+
+                    <DatePicker
+                      modal
+                      mode="date"
+                      open={show}
+                      date={date}
+                      onConfirm={(date) => onChangeDate(date)}
+                      onCancel={() => {
+                        setShow(false);
+                      }}
+                    />
+                  </View>
+                );
+              default:
+                return (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderColor: colors.light_gray,
+                      borderWidth: 1,
+                      marginBottom: 10,
+                      borderRadius: 20,
+                      backgroundColor: colors.white,
+                      paddingVertical: 5,
+                    }}>
+                    <CheckBox
+                      checked={question[index].c === i}
+                      checkedColor={colors.primaryColor}
+                      checkedIcon="dot-circle-o"
+                      uncheckedIcon="circle-o"
+                      size={30}
+                      onPress={() => {
+                        const temp = [...question];
+                        temp[index].c = i;
+                        setQuestion(temp);
+                      }}
+                    />
+                    <TextRegular>{item}</TextRegular>
+                  </View>
+                );
+            }
+          })()}
         </View>
       );
     };
     return (
       <View key={data} style={styles.page}>
+        <Space size={20} />
         <View
           style={{
             flex: 1,
@@ -218,6 +271,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
+  },
+  scheduleView: {
+    borderWidth: 1,
+    borderColor: colors.light_gray,
+    borderRadius: 20,
+    padding: 25,
+    backgroundColor: '#fff',
+  },
+  inputView: {
+    borderWidth: 1,
+    borderColor: colors.light_gray,
+    borderRadius: 20,
+    padding: 25,
+    backgroundColor: '#fff',
   },
 });
 export default Questionaire;
