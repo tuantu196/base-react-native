@@ -27,12 +27,11 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
     [key: string]: any | undefined;
   }>({});
 
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [progress, setProgress] = useState<number>(0.01);
 
   useEffect(() => {
     newQuestionnaire();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const persistStateToLocalStorage = () => {
     handleStorage.setItem(
@@ -45,12 +44,12 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
     if (currentQuestion === undefined) {
       return undefined;
     }
-    return answerData[currentQuestion!.id];
+    return answerData[currentQuestion.id];
   };
 
   const moveToNextStep = () => {
     try {
-      questionnaireEngine.setAnswer(currentQuestion!.id, currentAnswerValue());
+      questionnaireEngine.setAnswer(currentQuestion.id, currentAnswerValue());
     } catch (error) {
       // this.showErrorBannerHandler();
       console.log(error);
@@ -93,7 +92,7 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
       handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
     } else {
       const { question, answer } = questionnaireEngine.previousQuestion(
-        currentQuestion!.id
+        currentQuestion.id
       );
       setCurrentQuestion(question);
       const answers = JSON.parse(
@@ -107,7 +106,7 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
         requestAnimationFrame(() =>
           setAnswerData({
             ...answerData,
-            [currentQuestion!.id]: answer as string[],
+            [currentQuestion.id]: answer as string[],
           })
         );
       }
@@ -132,16 +131,16 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
         });
         // debugger;
         const previousQuestionId =
-          currentQuestion === undefined ? undefined : currentQuestion!.id;
+          currentQuestion === undefined ? undefined : currentQuestion.id;
         setCurrentQuestion(questionnaireEngine.nextQuestion());
         // Go back to previous Question if language is changed
         // TODO: https://github.com/CovOpen/CovQuestions/issues/190
         if (
           previousQuestionId !== undefined &&
-          currentQuestion!.id !== previousQuestionId
+          currentQuestion.id !== previousQuestionId
         ) {
           setCurrentQuestion(
-            questionnaireEngine.previousQuestion(currentQuestion!.id).question
+            questionnaireEngine.previousQuestion(currentQuestion.id).question
           );
         }
         setProgress(questionnaireEngine.getProgress());
@@ -150,6 +149,8 @@ const HomeScreen: React.FC<Props> = memo(({ navigation, route }) => {
         // do nothing for now
       });
   };
+
+  console.log('Tube currentQuestion:', currentQuestion);
 
   return (
     <SafeAreaView style={styles.container}>
