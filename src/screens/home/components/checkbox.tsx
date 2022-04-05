@@ -10,8 +10,6 @@ import Space from 'src/components/Space';
 import TextInput from 'src/components/TextInput';
 import TextRegular from 'src/components/TextRegular';
 import { colors } from 'src/utils/colors';
-import TextBold from '../../components/TextBold';
-import DatePickerComponent from './components/datepicker';
 import CheckboxList from 'rn-checkbox-list';
 // import CheckboxGroup from 'react-native-checkbox-group';
 const QUESTION = [
@@ -72,57 +70,36 @@ const QUESTION = [
     type: 'YesNo',
   },
 ];
-const Questionaire = memo(() => {
+const CheckBoxComponent = () => {
   const [currentPage, setCurrentPage] = React.useState<number>(0);
   const [question, setQuestion] = useState(QUESTION);
-  const [date, setDate] = useState(new Date());
-  const [check, setCheck] = useState<any>([]);
-  const onChange = (checkedValues: any) => {
-    console.log('checked = ', checkedValues);
-  };
-
   const renderViewPagerPage = (data: any, index: number) => {
     const renderItem = (item: any, i: any) => {
       return (
-        <View>
-          {(() => {
-            switch (item) {
-              case 'Input':
-                return (
-                  <View style={styles.inputView}>
-                    <TextInput placeholder={'Your answer'}></TextInput>
-                  </View>
-                );
-              case 'DD/MM/YYYY':
-                return <DatePickerComponent />;
-              default:
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    borderColor: colors.light_gray,
-                    borderWidth: 1,
-                    marginBottom: 10,
-                    borderRadius: 20,
-                    backgroundColor: colors.white,
-                    paddingVertical: 5,
-                  }}>
-                  <CheckBox
-                    checked={question[index].c === i}
-                    checkedColor={colors.primaryColor}
-                    checkedIcon="dot-circle-o"
-                    uncheckedIcon="circle-o"
-                    size={30}
-                    onPress={() => {
-                      const temp = [...question];
-                      temp[index].c = i;
-                      setQuestion(temp);
-                    }}
-                  />
-                  <TextRegular>{item.value}</TextRegular>
-                </View>;
-            }
-          })()}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderColor: colors.light_gray,
+            borderWidth: 1,
+            marginBottom: 10,
+            borderRadius: 20,
+            backgroundColor: colors.white,
+            paddingVertical: 5,
+          }}>
+          <CheckBox
+            checked={question[index].c === i}
+            checkedColor={colors.primaryColor}
+            checkedIcon="dot-circle-o"
+            uncheckedIcon="circle-o"
+            size={30}
+            onPress={() => {
+              const temp = [...question];
+              temp[index].c = i;
+              setQuestion(temp);
+            }}
+          />
+          <TextRegular>{item.value}</TextRegular>
         </View>
       );
     };
@@ -137,7 +114,6 @@ const Questionaire = memo(() => {
           <Space size={20} />
           <TextRegular size={20}>{data.q}</TextRegular>
           <Space />
-          <TextBold size={30}>{data.d}</TextBold>
           <Space />
           <FlatList
             data={data.a}
@@ -204,7 +180,7 @@ const Questionaire = memo(() => {
       </Swiper>
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   page: {
@@ -228,4 +204,4 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
-export default Questionaire;
+export default CheckBoxComponent;

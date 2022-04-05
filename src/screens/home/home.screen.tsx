@@ -1,11 +1,13 @@
 /* eslint-disable react-native/no-inline-styles */
 import { ApiResponse } from 'apisauce';
 import React, { memo, useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import Button from 'src/components/Button/Button';
 import { useAppDispatch, useAppSelector } from 'src/hooks/Hooks';
 import { useNavigation } from '@react-navigation/native';
 import { AppRoute } from 'src/navigator/app.route';
+import CheckboxList from 'rn-checkbox-list';
+import { Item } from 'react-native-paper/lib/typescript/components/List/List';
 
 type Props = {
   navigation: any;
@@ -28,6 +30,7 @@ const HomeScreen: React.FC<Props> = memo(() => {
         title="Start"
         style={{
           marginHorizontal: 20,
+          marginBottom: 50,
         }}></Button>
     </SafeAreaView>
   );
