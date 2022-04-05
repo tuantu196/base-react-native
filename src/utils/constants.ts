@@ -22,3 +22,13 @@ export const ITEM_WIDTH = WINDOW_WIDTH;
 export const LANGUAGE_DEFAULT = 'en';
 export const isIOS = Platform.OS === 'ios';
 export const isAdroid = Platform.OS === 'android';
+
+export const QUESTIONNAIRE_VERSION = '400';
+
+export const LOCAL_STORAGE_KEYS = {
+  ANSWERS: 'answers',
+  VERSION: 'version',
+  DATA_SENT: 'dataSent',
+  EXPORTED: 'exported',
+  QUESTIONNAIRE: 'questionnaire',
+};
