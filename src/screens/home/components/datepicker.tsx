@@ -7,7 +7,7 @@ import moment from 'moment';
 import { colors } from 'src/utils/colors';
 import DatePicker from 'react-native-date-picker';
 
-const DatePickerComponent = () => {
+const DatePickerComponent = (updateFormData: any) => {
   const navigation = useNavigation();
 
   const [date, setDate] = useState(new Date());
@@ -15,6 +15,7 @@ const DatePickerComponent = () => {
   const onChangeDate = (selectedDate: any) => {
     setShow(false);
     setDate(selectedDate);
+    updateFormData(selectedDate);
   };
   const onOpenDatePicker = () => {
     setShow(true);

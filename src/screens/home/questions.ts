@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { LOCAL_STORAGE_KEYS } from 'src/utils/constants';
 import { handleStorage } from 'src/utils/storage';
 import { Questionnaire } from 'src/utils/type';
@@ -15,7 +16,7 @@ export const getQuestionnaire = (language = 'de'): Promise<Questionnaire> => {
   //   if (cachedQuestionnaire) {
   //     return new Promise(() => cachedQuestionnaire);
   //   }
-  if (questionnaire != undefined && cacheKey === language) {
+  if (questionnaire !== undefined && cacheKey === language) {
     return new Promise((resolve) =>
       resolve(addAdditionalQuestions(questionnaire))
     );

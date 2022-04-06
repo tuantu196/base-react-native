@@ -20,56 +20,48 @@ const QUESTION = [
     d: '',
     a: ['Yes', 'No'],
     c: null,
-    type: 'YesNo',
   },
   {
     q: 'How often do you have problems remembering appointments or obligations?',
     d: '',
     a: ['DD/MM/YYYY'],
     c: null,
-    type: 'Date',
   },
   {
     q: 'How often do you make careless mistakes when you have to work on a boring or difficult project?',
     d: '',
     a: ['Input'],
     c: null,
-    type: 'Input',
   },
   {
     q: 'How often do you have difficulty keeping your attention when you are doing boring or repetitive work?',
     d: '',
     a: ['Yes', 'No'],
     c: null,
-    type: 'YesNo',
   },
   {
     q: 'How often do you have difficulty concentrating on what people say to you, even when they are speaking to you directly?',
     d: '',
     a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
     c: null,
-    type: 'MultipleChoice',
   },
   {
     q: 'How often do you misplace or have difficulty finding things at home or at work?',
     d: '',
     a: ['Input'],
     c: null,
-    type: 'Input',
   },
   {
     q: 'How often are you distracted by activity or noise around you?',
     d: '',
     a: ['Never', 'Rarely', 'Sometimes', 'Often', 'Very Often'],
     c: null,
-    type: 'MultipleChoice',
   },
   {
     q: 'How often do you feel restless or fidgety?',
     d: '',
     a: ['Yes', 'No'],
     c: null,
-    type: 'YesNo',
   },
 ];
 const Questionaire = memo(() => {
@@ -84,7 +76,7 @@ const Questionaire = memo(() => {
   const renderViewPagerPage = (data: any, index: number) => {
     const renderItem = (item: any, i: any) => {
       return (
-        <View>
+        <View style={{ flex: 1 }}>
           {(() => {
             switch (item) {
               case 'Input':
@@ -96,31 +88,33 @@ const Questionaire = memo(() => {
               case 'DD/MM/YYYY':
                 return <DatePickerComponent />;
               default:
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    borderColor: colors.light_gray,
-                    borderWidth: 1,
-                    marginBottom: 10,
-                    borderRadius: 20,
-                    backgroundColor: colors.white,
-                    paddingVertical: 5,
-                  }}>
-                  <CheckBox
-                    checked={question[index].c === i}
-                    checkedColor={colors.primaryColor}
-                    checkedIcon="dot-circle-o"
-                    uncheckedIcon="circle-o"
-                    size={30}
-                    onPress={() => {
-                      const temp = [...question];
-                      temp[index].c = i;
-                      setQuestion(temp);
-                    }}
-                  />
-                  <TextRegular>{item.value}</TextRegular>
-                </View>;
+                return (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      borderColor: colors.light_gray,
+                      borderWidth: 1,
+                      marginBottom: 10,
+                      borderRadius: 20,
+                      backgroundColor: colors.white,
+                      paddingVertical: 5,
+                    }}>
+                    <CheckBox
+                      checked={question[index].c === i}
+                      checkedColor={colors.primaryColor}
+                      checkedIcon="dot-circle-o"
+                      uncheckedIcon="circle-o"
+                      size={30}
+                      onPress={() => {
+                        const temp = [...question];
+                        temp[index].c = i;
+                        setQuestion(temp);
+                      }}
+                    />
+                    <TextRegular>{item}</TextRegular>
+                  </View>
+                );
             }
           })()}
         </View>
