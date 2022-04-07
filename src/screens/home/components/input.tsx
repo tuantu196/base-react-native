@@ -6,21 +6,11 @@ import moment from 'moment';
 import { colors } from 'src/utils/colors';
 import DatePicker from 'react-native-date-picker';
 
-const InputComponent = () => {
-  const navigation = useNavigation();
 
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-  const onChangeDate = (selectedDate: any) => {
-    setShow(false);
-    setDate(selectedDate);
-  };
-  const onOpenDatePicker = () => {
-    setShow(true);
-  };
+const InputComponent = () => {
   return (
     <View style={styles.inputView}>
-      <TextInput placeholder={'Your answer'}></TextInput>
+      <TextInput placeholder={'Your answer'} />
     </View>
   );
 };

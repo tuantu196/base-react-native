@@ -1,5 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
+import HomeScreen from 'src/screens/home/home.screen';
 import { AppNavigator } from './app.navigator';
 import { AppRoute } from './app.route';
 import { AuthNavigator } from './auth.navigator';
@@ -21,7 +22,7 @@ export const RootNavigator = (
       {...props}
       screenOptions={{ headerShown: false }}
       initialRouteName={AppRoute.APP}>
-      <Stack.Screen name={AppRoute.APP} component={AppNavigator} />
+      <Stack.Screen name={AppRoute.APP} component={HomeScreen} />
       <Stack.Screen name={AppRoute.AUTH} component={AuthNavigator} />
     </Stack.Navigator>
   );

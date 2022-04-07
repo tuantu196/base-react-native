@@ -22,7 +22,7 @@ import api from 'src/services/apisauce';
 import { LOCAL_STORAGE_KEYS } from 'src/utils/constants';
 import { QuestionnaireEngine, RawAnswer } from 'src/utils/questionnaireEngine';
 import { handleStorage } from 'src/utils/storage';
-import { Question } from 'src/utils/type';
+import { Option, Question } from 'src/utils/type';
 import { QUESTION_SHARE_DATA } from 'src/utils/utils';
 import { getQuestionnaire } from './questions';
 import InputComponent from './components/input';
@@ -35,6 +35,7 @@ import { CheckBox } from 'react-native-elements';
 import TextInput from 'src/components/TextInput';
 import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
+import HeaderComponents from './components/header';
 
 type Props = {
   navigation: any;
@@ -58,11 +59,11 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [progress, setProgress] = useState<number>(0.01);
   const [date, setDate] = useState(new Date());
+  const [textAnswer, setTextAnswer] = useState('');
   const [show, setShow] = useState(false);
   const onChangeDate = (selectedDate: any) => {
     setShow(false);
     setDate(selectedDate);
-    updateFormData(selectedDate);
   };
   const onOpenDatePicker = () => {
     setShow(true);
@@ -95,10 +96,11 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         // TODO: https://github.com/CovOpen/CovQuestions/issues/190
         if (
           previousQuestionId !== undefined &&
-          currentQuestion.id !== previousQuestionId
+          currentQuestion?.id !== previousQuestionId
         ) {
           setCurrentQuestion(
-            questionnaireEngine.previousQuestion(currentQuestion.id).question
+            questionnaireEngine.previousQuestion(currentQuestion?.id as string)
+              .question
           );
         }
         setProgress(questionnaireEngine.getProgress());
@@ -118,13 +120,13 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
 
   const updateFormData = (event: any) => {
     const { detail } = event;
-    if (currentQuestion.type === 'date') {
+    if (currentQuestion?.type === 'date') {
       // Calculate Custom Timestamp
       // TODO: https://github.com/CovOpen/CovQuestions/issues/143
       event.value = event.value / 1000;
     }
-    setFormData(currentQuestion.id, event.value);
-    console.log('detailll', currentQuestion.id, event.value);
+    setTextAnswer('');
+    setFormData(currentQuestion?.id as string, event.value);
   };
   const setFormData = (key: string, value: string | string[]) => {
     // eslint-disable-next-line no-const-assign
@@ -135,14 +137,50 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     };
     console.log('temp', temp);
 
-    // setAnswerData(temp);
+    setAnswerData(temp);
     console.log('data', answerData);
   };
   const submitForm = () => {
     // (event.target as HTMLInputElement).querySelector('input')?.focus();
-    moveToNextStep();
+    switch (currentQuestion?.type) {
+      case 'select': {
+        const answer = currentQuestion.options?.find(
+          (option: Option) => option?.checked === true
+        ) as Option;
+        console.log('answer', answer);
 
-    console.log('aaaaaa1', questionnaireEngine);
+        setFormData(currentQuestion?.id as string, answer?.value);
+        break;
+      }
+      case 'multiselect': {
+        console.log('answers', currentQuestion);
+        const answers = currentQuestion?.options?.map((option: Option) => {
+          if (option?.checked) {
+            return option?.value;
+          }
+        }) as unknown as string[];
+        console.log('answers', answers);
+
+        if (answers?.length) {
+          setFormData(currentQuestion?.id as string, answers);
+        }
+        break;
+      }
+      case 'date': {
+        updateFormData(date);
+        break;
+      }
+      case 'number': {
+        updateFormData(textAnswer);
+        break;
+      }
+      case 'text': {
+        updateFormData(textAnswer);
+        break;
+      }
+    }
+    // updateFormData();
+    moveToNextStep();
   };
 
   const moveToPreviousStep = async () => {
@@ -151,7 +189,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
     } else {
       const { question, answer } = questionnaireEngine.previousQuestion(
-        currentQuestion.id
+        currentQuestion?.id as string
       );
       setCurrentQuestion(question);
       const answers = JSON.parse(
@@ -165,7 +203,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         requestAnimationFrame(() =>
           setAnswerData({
             ...answerData,
-            [currentQuestion.id]: answer as string[],
+            [currentQuestion?.id]: answer as string[],
           })
         );
       }
@@ -180,7 +218,10 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
 
   const moveToNextStep = () => {
     try {
-      questionnaireEngine?.setAnswer(currentQuestion.id, currentAnswerValue());
+      questionnaireEngine?.setAnswer(
+        currentQuestion?.id as string,
+        currentAnswerValue()
+      );
     } catch (error) {
       // this.showErrorBannerHandler();
       console.log(error);
@@ -220,126 +261,116 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   };
   console.log('Tube currentQuestion:', currentQuestion);
 
-  const renderItem = (item: any) => {
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          borderColor: colors.light_gray,
-          borderWidth: 1,
-          marginBottom: 10,
-          borderRadius: 20,
-          backgroundColor: colors.white,
-          paddingVertical: 5,
-        }}>
-        <CheckBox
-          // checked={currentQuestion[index].c === i}
-          checkedColor={colors.primaryColor}
-          checkedIcon="dot-circle-o"
-          uncheckedIcon="circle-o"
-          size={30}
-          onPress={() => {
-            updateFormData(item);
-          }}
-        />
-        <TextRegular>{item.text}</TextRegular>
-      </View>
-    );
+  const onChecked = (item: any, options: any[], isSelected: boolean) => {
+    const _options = options.map((option: any) => {
+      return {
+        ...option,
+        checked:
+          item.value === option.value
+            ? !option?.checked
+            : isSelected
+            ? false
+            : option?.checked || false,
+      };
+    });
+    const _question = { ...currentQuestion, options: _options } as Question;
+    setCurrentQuestion(_question);
   };
+
+  const renderAnswer = () => {
+    switch (currentQuestion?.type) {
+      case 'select': {
+        return (
+          <CheckBoxListComponent
+            options={currentQuestion?.options as any[]}
+            onChecked={onChecked}
+            isSelected={true}
+          />
+        );
+      }
+      case 'date':
+        return (
+          <View style={styles.page}>
+            <View style={styles.scheduleView}>
+              <TextInput
+                value={moment(date).format('DD/MM/YYYY')}
+                placeholder={'DD/MM/YYYY'}
+                onTouchStart={onOpenDatePicker}
+                editable={false}
+                // style={styles.datePicker}
+              />
+              <DatePicker
+                modal
+                mode="date"
+                open={show}
+                date={date}
+                onConfirm={(date: any) => onChangeDate(date)}
+                onCancel={() => {
+                  setShow(false);
+                }}
+              />
+            </View>
+          </View>
+        );
+      case 'multiselect':
+        return (
+          <CheckBoxListComponent
+            options={currentQuestion?.options as any[]}
+            onChecked={onChecked}
+            isSelected={false}
+          />
+        );
+      case 'number':
+        return (
+          <View style={styles.inputView}>
+            <TextInput
+              placeholder={'Your answer'}
+              value={textAnswer}
+              onChangeText={setTextAnswer}
+              keyboardType={'numeric'}
+            />
+          </View>
+        );
+      case 'text':
+        return (
+          <View style={styles.inputView}>
+            <TextInput
+              placeholder={'Your answer'}
+              value={textAnswer}
+              onChangeText={setTextAnswer}
+            />
+          </View>
+        );
+      default:
+        return (
+          <View style={{ flex: 1 }}>
+            <TextRegular>{currentQuestion?.text}</TextRegular>
+          </View>
+        );
+    }
+  };
+
+  const onPrev = () => {};
   return (
     <View style={styles.container}>
-      {(() => {
-        switch (currentQuestion?.type) {
-          case 'select':
-            return (
-              <View style={styles.page}>
-                <Space size={20} />
-                <View
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                  }}>
-                  <Space size={20} />
-                  <TextRegular size={20}>{currentQuestion.text}</TextRegular>
-                  <Space />
-                  <Space />
-                  <FlatList
-                    data={currentQuestion.options}
-                    renderItem={({ item, index }) => renderItem(item)}
-                    style={{
-                      width: '100%',
-                    }}
-                    scrollEnabled={false}
-                  />
-                </View>
-                <Space size={20} />
-              </View>
-            );
-          case 'date':
-            return (
-              <View style={styles.page}>
-                <Space size={20} />
-                <View
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                  }}>
-                  <Space size={20} />
-                  <TextRegular size={20}>{currentQuestion.text}</TextRegular>
-                  <Space />
-                  <Space />
-                  {/* <DatePickerComponent updateFormData={updateFormData} /> */}
-                  <View style={styles.scheduleView}>
-                    <TextInput
-                      value={moment(date).format('DD/MM/YYYY')}
-                      placeholder={'DD/MM/YYYY'}
-                      onTouchStart={onOpenDatePicker}
-                      editable={false}
-                      // style={styles.datePicker}
-                    />
-
-                    <DatePicker
-                      modal
-                      mode="date"
-                      open={show}
-                      date={date}
-                      onConfirm={(date: any) => onChangeDate(date)}
-                      onCancel={() => {
-                        setShow(false);
-                      }}
-                    />
-                  </View>
-                </View>
-                <Space size={20} />
-              </View>
-            );
-          case 'multiselect':
-            return <CheckBoxListComponent />;
-          case 'number':
-            return <InputComponent />;
-          // case 'number':
-          //   return <InputComponent />;
-          default:
-            return (
-              <View style={{ flex: 1 }}>
-                <TextRegular>{currentQuestion?.text}</TextRegular>
-              </View>
-            );
-        }
-      })()}
+      <HeaderComponents
+        question={currentQuestion?.text as string}
+        onPress={onPrev}
+      />
+      {renderAnswer()}
       <Button
         onPress={() => {
           submitForm();
         }}
-        title="Continue"
+        title="Next"
         disabled={
           !currentQuestion?.optional && currentAnswerValue === undefined
         }
         style={{
           marginHorizontal: 20,
           marginBottom: 50,
-        }}></Button>
+        }}
+      />
     </View>
   );
 });
@@ -349,14 +380,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-evenly',
     backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
   page: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
   },
   scheduleView: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.gray,
+    borderRadius: 20,
+    padding: 25,
+    backgroundColor: '#fff',
+  },
+  inputView: {
     borderWidth: 1,
     borderColor: colors.light_gray,
     borderRadius: 20,

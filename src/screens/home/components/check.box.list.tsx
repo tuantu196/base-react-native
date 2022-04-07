@@ -1,45 +1,42 @@
-import React, { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import TextInput from 'src/components/TextInput';
-import moment from 'moment';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { CheckBox } from 'react-native-elements';
 import { colors } from 'src/utils/colors';
-import DatePicker from 'react-native-date-picker';
-import CheckboxList from 'rn-checkbox-list';
 
-const data = [
-  { id: 1, name: 'Green Book' },
-  { id: 2, name: 'Bohemian Rhapsody' },
-  { id: 3, name: 'Roma' },
-  { id: 4, name: 'Black Panther' },
-  { id: 5, name: 'The Favourite' },
-];
-const CheckBoxListComponent = () => {
+export interface Props {
+  options: any[];
+  isSelected: boolean;
+  onChecked: (option: any, options: any[], isSelected: boolean) => void;
+}
+const CheckBoxListComponent = ({ isSelected, options, onChecked }: Props) => {
+  const data = options.map((option: any) => {
+    return {
+      ...option,
+      checked: option.checked || false,
+    };
+  });
+  console.log('input', data);
+
   return (
-    <View style={styles.scheduleView}>
-      <CheckboxList
-        theme={'red'}
-        listItems={data}
-        // onChange={({ ids, items }) => {
-        //   // eslint-disable-next-line no-console
-        //   console.log('My updated list :: ', ids);
-        // }}
-        checkboxProp={Platform.select({
-          ios: {
-            boxType: 'square',
-            tintColor: 'gray',
-            onTintColor: 'red',
-            onCheckColor: '#fff',
-            onFillColor: 'red',
-          },
-          android: {
-            tintColors: {
-              true: 'red',
-              false: 'gray',
-            },
-          },
-        })}
-      />
+    <View>
+      {data.map((option: any, index: number) => {
+        return (
+          <CheckBox
+            key={index}
+            checkedColor={colors.primaryColor}
+            checkedIcon="dot-circle-o"
+            uncheckedIcon="circle-o"
+            size={30}
+            containerStyle={styles.itemCheck}
+            checked={option.checked}
+            title={option.text}
+            onPress={() => {
+              // updateFormData(item);
+              onChecked(option, options, isSelected);
+            }}
+          />
+        );
+      })}
     </View>
   );
 };
@@ -51,6 +48,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 25,
     backgroundColor: '#fff',
+  },
+  itemCheck: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: colors.light_gray,
+    height: 60,
+    borderWidth: 1,
+    marginBottom: 10,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    paddingVertical: 5,
   },
 });
 
