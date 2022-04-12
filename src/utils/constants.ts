@@ -32,3 +32,15 @@ export const LOCAL_STORAGE_KEYS = {
   EXPORTED: 'exported',
   QUESTIONNAIRE: 'questionnaire',
 };
+export const ROUTES = {
+  QUESTIONNAIRE: '/questionnaire',
+  SUMMARY: '/summary',
+  LEGAL: '/legal',
+  IMPRINT: '/imprint',
+  DISCLAIMER: '/disclaimer',
+  FAQ: '/faq',
+  DATA_PRIVACY: '/data-privacy',
+  EXPORT: '/export',
+  RECOMMENDATIONS: '/recommendations',
+  ANSWERS: '/answers',
+};

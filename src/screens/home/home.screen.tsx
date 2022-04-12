@@ -19,9 +19,9 @@ import CheckboxList from 'rn-checkbox-list';
 import { Item } from 'react-native-paper/lib/typescript/components/List/List';
 import { counterSlice } from 'src/redux/counter/slice';
 import api from 'src/services/apisauce';
-import { LOCAL_STORAGE_KEYS } from 'src/utils/constants';
+import { LOCAL_STORAGE_KEYS, ROUTES } from 'src/utils/constants';
 import { QuestionnaireEngine, RawAnswer } from 'src/utils/questionnaireEngine';
-import { handleStorage } from 'src/utils/storage';
+import { handleObjectStorage, handleStorage } from 'src/utils/storage';
 import { Option, Question } from 'src/utils/type';
 import { QUESTION_SHARE_DATA } from 'src/utils/utils';
 import { getQuestionnaire } from './questions';
@@ -36,6 +36,7 @@ import TextInput from 'src/components/TextInput';
 import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 import HeaderComponents from './components/header';
+import { RouterHistory } from 'src/utils/typeRouteHistory';
 
 type Props = {
   navigation: any;
@@ -48,14 +49,12 @@ type A = {
 
 const HomeScreen: React.FC<Props> = memo(({ route }) => {
   const navigation = useNavigation();
-  const navigateQuestionaire = () => {
-    navigation.navigate(AppRoute.QUESTIONAIRE);
-  };
-  var questionnaireEngine: QuestionnaireEngine;
-
+  let questionnaireEngine: QuestionnaireEngine;
   const [answerData, setAnswerData] = useState<{
     [key: string]: any | undefined;
   }>({});
+  var history: RouterHistory;
+  const [questionData, setQuestionData] = useState<QuestionnaireEngine>();
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [progress, setProgress] = useState<number>(0.01);
   const [date, setDate] = useState(new Date());
@@ -68,13 +67,12 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   const onOpenDatePicker = () => {
     setShow(true);
   };
-  useEffect(() => {
-    newQuestionnaire();
-  }, [answerData]);
+
   const newQuestionnaire = async () => {
     await getQuestionnaire('en')
       .then((questionnaire) => {
         questionnaireEngine = new QuestionnaireEngine(questionnaire);
+        setQuestionData(questionnaireEngine);
         // TODO:https://github.com/CovOpen/CovQuestions/issues/148
         questionnaireEngine.setAnswersPersistence({
           answers: Object.keys(answerData).reduce((accumulator, key) => {
@@ -84,7 +82,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             });
             return accumulator;
           }, []),
-
           version: 2,
           timeOfExecution: 23,
         });
@@ -103,19 +100,20 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
               .question
           );
         }
+
         setProgress(questionnaireEngine.getProgress());
-        console.log('question1111', questionnaireEngine);
       })
       .catch(() => {
         // do nothing for now
       });
-    console.log('question22222222', questionnaireEngine);
   };
+
   const persistStateToLocalStorage = () => {
     handleStorage.setItem(
       LOCAL_STORAGE_KEYS.ANSWERS,
       JSON.stringify(answerData)
     );
+    console.log('new one', JSON.stringify(answerData));
   };
 
   const updateFormData = (event: any) => {
@@ -129,17 +127,14 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     setFormData(currentQuestion?.id as string, event.value);
   };
   const setFormData = (key: string, value: string | string[]) => {
-    // eslint-disable-next-line no-const-assign
     let temp;
     temp = {
       ...answerData,
       [key]: value,
     };
-    console.log('temp', temp);
-
     setAnswerData(temp);
-    console.log('data', answerData);
   };
+
   const submitForm = () => {
     // (event.target as HTMLInputElement).querySelector('input')?.focus();
     switch (currentQuestion?.type) {
@@ -147,19 +142,16 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         const answer = currentQuestion.options?.find(
           (option: Option) => option?.checked === true
         ) as Option;
-        console.log('answer', answer);
 
         setFormData(currentQuestion?.id as string, answer?.value);
         break;
       }
       case 'multiselect': {
-        console.log('answers', currentQuestion);
         const answers = currentQuestion?.options?.map((option: Option) => {
           if (option?.checked) {
             return option?.value;
           }
         }) as unknown as string[];
-        console.log('answers', answers);
 
         if (answers?.length) {
           setFormData(currentQuestion?.id as string, answers);
@@ -183,32 +175,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     moveToNextStep();
   };
 
-  const moveToPreviousStep = async () => {
-    setProgress(questionnaireEngine.getProgress());
-    if (progress === 0) {
-      handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
-    } else {
-      const { question, answer } = questionnaireEngine.previousQuestion(
-        currentQuestion?.id as string
-      );
-      setCurrentQuestion(question);
-      const answers = JSON.parse(
-        (await handleStorage.getItem(LOCAL_STORAGE_KEYS.ANSWERS)) ?? ''
-      );
-      if (answerData && answers) {
-        setAnswerData(answers);
-        persistStateToLocalStorage();
-        // reset previous answer so that fields are still filled out
-        // answerData needs reassignment to avoid race condition
-        requestAnimationFrame(() =>
-          setAnswerData({
-            ...answerData,
-            [currentQuestion?.id]: answer as string[],
-          })
-        );
-      }
-    }
-  };
   const currentAnswerValue = (): RawAnswer => {
     if (currentQuestion === undefined) {
       return undefined;
@@ -216,7 +182,18 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     return answerData[currentQuestion.id];
   };
 
-  const moveToNextStep = () => {
+  const moveToNextStep = async () => {
+    const getData = async () => {
+      const availableAnswers = await handleStorage.getItem(
+        LOCAL_STORAGE_KEYS.ANSWERS
+      );
+      console.log('aaaaddd', availableAnswers);
+
+      return availableAnswers;
+    };
+
+    const b = getData();
+
     try {
       questionnaireEngine?.setAnswer(
         currentQuestion?.id as string,
@@ -227,28 +204,30 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       console.log(error);
       return;
     }
-    const nextQuestion = questionnaireEngine?.nextQuestion();
-    setProgress(questionnaireEngine?.getProgress());
+
+    const nextQuestion = questionData?.nextQuestion();
+    setProgress(questionData.getProgress());
     if (nextQuestion === undefined) {
-      // let answers: any = questionnaireEngine.getAnswersPersistence();
-      // if (
-      //   answers.answers.find((q) => q.questionId === QUESTION_SHARE_DATA().id)
-      //     .rawAnswer === 'yes'
-      // ) {
-      //   // User is sharing data
-      //   donateAnswers(answers);
-      // }
-      // this.history.push(ROUTES.SUMMARY, {});
-      // trackEvent(TRACKING_EVENTS.FINISH);
+      let answers: any = questionData.getAnswersPersistence();
+      if (
+        answers.answers.find(
+          (q: any) => q.questionId === QUESTION_SHARE_DATA().id
+        ).rawAnswer === 'yes'
+      ) {
+        // User is sharing data
+        // donateAnswers(answers);
+      }
+      history.push(ROUTES.SUMMARY, {});
     } else {
       setCurrentQuestion(nextQuestion);
     }
-    // this.persistStateToLocalStorage();
+    persistStateToLocalStorage();
+    console.log('answer dtaa', answerData);
 
-    // if (this.currentQuestion.id === QUESTION_SHARE_DATA().id) {
+    // if (currentQuestion.id === QUESTION_SHARE_DATA().id) {
     //   trackEvent([
     //     ...TRACKING_EVENTS.DATA_DONATION_CONSENT,
-    //     this.currentAnswerValue === 'yes' ? '1' : '0',
+    //     currentAnswerValue === 'yes' ? '1' : '0',
     //   ]);
     // }
     // try {
@@ -256,10 +235,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     // } catch (error) {
     //   console.log(error);
     // }
-    console.log('question', currentQuestion);
-    console.log('aaaaaa', questionnaireEngine);
   };
-  console.log('Tube currentQuestion:', currentQuestion);
 
   const onChecked = (item: any, options: any[], isSelected: boolean) => {
     const _options = options.map((option: any) => {
@@ -350,12 +326,69 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     }
   };
 
-  const onPrev = () => {};
+  const moveToPreviousStep = async () => {
+    setProgress(questionData?.getProgress());
+    if (progress === 0) {
+      history.push(`/`, {});
+      handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
+    } else {
+      const { question, answer }: any = questionData?.previousQuestion(
+        currentQuestion?.id as string
+      );
+      setCurrentQuestion(question);
+      setCurrentQuestion(
+        question?.previousQuestion(currentQuestion?.id as string).question
+      );
+      const answers = JSON.parse(
+        (await handleStorage.getItem(LOCAL_STORAGE_KEYS.ANSWERS)) ?? ''
+      );
+      if (answerData && answers) {
+        setAnswerData(answers);
+        persistStateToLocalStorage();
+
+        requestAnimationFrame(() =>
+          setAnswerData({
+            ...answerData,
+            [currentQuestion?.id]: answer as string[],
+          })
+        );
+      }
+    }
+  };
+
+  useEffect(() => {
+    const getData = async () => {
+      const availableAnswers = await handleStorage.getItem(
+        LOCAL_STORAGE_KEYS.ANSWERS
+      );
+      // setAnswerData(JSON.parse(JSON.stringify(availableAnswers)));
+
+      // return availableAnswers;
+    };
+
+    getData();
+
+    // console.log('available', JSON.parse(JSON.stringify(availableAnswers)));
+    // console.log('available113', availableAnswers);
+    // console.log('available1155', JSON.stringify(availableAnswers));
+    // const answerDataNew = handleObjectStorage.getObject(
+    //   LOCAL_STORAGE_KEYS.ANSWERS
+    // );
+    // console.log('data answer', answerDataNew);
+    // console.log('data answer1', JSON.stringify(answerDataNew));
+    // console.log('data answer2', JSON.parse(JSON.stringify(answerDataNew)));
+
+    // console.log('available1155', JSON.parse(availableAnswers));
+  }, []);
+  useEffect(() => {
+    newQuestionnaire();
+  }, [answerData]);
+
   return (
     <View style={styles.container}>
       <HeaderComponents
         question={currentQuestion?.text as string}
-        onPress={onPrev}
+        onPress={moveToPreviousStep}
       />
       {renderAnswer()}
       <Button

@@ -15,7 +15,6 @@ const CheckBoxListComponent = ({ isSelected, options, onChecked }: Props) => {
       checked: option.checked || false,
     };
   });
-  console.log('input', data);
 
   return (
     <View>
