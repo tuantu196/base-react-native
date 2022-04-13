@@ -31,6 +31,7 @@ export const LOCAL_STORAGE_KEYS = {
   DATA_SENT: 'dataSent',
   EXPORTED: 'exported',
   QUESTIONNAIRE: 'questionnaire',
+  QUESTION: 'question',
 };
 export const ROUTES = {
   QUESTIONNAIRE: '/questionnaire',

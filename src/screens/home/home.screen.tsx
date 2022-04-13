@@ -37,6 +37,8 @@ import DatePicker from 'react-native-date-picker';
 import moment from 'moment';
 import HeaderComponents from './components/header';
 import { RouterHistory } from 'src/utils/typeRouteHistory';
+import { json } from 'stream/consumers';
+import CheckBoxListMultipleComponent from './components/check.box.list.multiple';
 
 type Props = {
   navigation: any;
@@ -113,11 +115,17 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       LOCAL_STORAGE_KEYS.ANSWERS,
       JSON.stringify(answerData)
     );
-    console.log('new one', JSON.stringify(answerData));
   };
-
+  // const persistQuestionToLocalStorage = (_question: any) => {
+  //   handleStorage.setItem(
+  //     LOCAL_STORAGE_KEYS.QUESTION,
+  //     JSON.stringify(_question)
+  //   );
+  //   console.log('_question', _question);
+  // };
   const updateFormData = (event: any) => {
     const { detail } = event;
+
     if (currentQuestion?.type === 'date') {
       // Calculate Custom Timestamp
       // TODO: https://github.com/CovOpen/CovQuestions/issues/143
@@ -133,6 +141,8 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       [key]: value,
     };
     setAnswerData(temp);
+
+    persistStateToLocalStorage();
   };
 
   const submitForm = () => {
@@ -173,6 +183,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     }
     // updateFormData();
     moveToNextStep();
+    console.log('question', currentQuestion);
   };
 
   const currentAnswerValue = (): RawAnswer => {
@@ -182,48 +193,36 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     return answerData[currentQuestion.id];
   };
 
-  const moveToNextStep = async () => {
-    const getData = async () => {
-      const availableAnswers = await handleStorage.getItem(
-        LOCAL_STORAGE_KEYS.ANSWERS
-      );
-      console.log('aaaaddd', availableAnswers);
-
-      return availableAnswers;
-    };
-
-    const b = getData();
-
-    try {
-      questionnaireEngine?.setAnswer(
-        currentQuestion?.id as string,
-        currentAnswerValue()
-      );
-    } catch (error) {
-      // this.showErrorBannerHandler();
-      console.log(error);
-      return;
-    }
-
-    const nextQuestion = questionData?.nextQuestion();
-    setProgress(questionData.getProgress());
-    if (nextQuestion === undefined) {
-      let answers: any = questionData.getAnswersPersistence();
-      if (
-        answers.answers.find(
-          (q: any) => q.questionId === QUESTION_SHARE_DATA().id
-        ).rawAnswer === 'yes'
-      ) {
-        // User is sharing data
-        // donateAnswers(answers);
-      }
-      history.push(ROUTES.SUMMARY, {});
-    } else {
-      setCurrentQuestion(nextQuestion);
-    }
-    persistStateToLocalStorage();
-    console.log('answer dtaa', answerData);
-
+  const moveToNextStep = () => {
+    // try {
+    //   questionData?.setAnswer(
+    //     currentQuestion?.id as string,
+    //     currentAnswerValue()
+    //   );
+    // } catch (error) {
+    //   // this.showErrorBannerHandler();
+    //   console.log(error);
+    //   return;
+    // }
+    // console.log('answer data', answerData);
+    // const nextQuestion = await questionData?.nextQuestion();
+    // // setProgress(questionData.getProgress());
+    // if (nextQuestion === undefined) {
+    //   let answers: any = questionData.getAnswersPersistence();
+    //   if (
+    //     answers.answers.find(
+    //       (q: any) => q.questionId === QUESTION_SHARE_DATA().id
+    //     ).rawAnswer === 'yes'
+    //   ) {
+    //     // User is sharing data
+    //     // donateAnswers(answers);
+    //   }
+    //   history.push(ROUTES.SUMMARY, {});
+    // } else {
+    //   setCurrentQuestion(nextQuestion);
+    //   console.log('enter here', answerData);
+    // }
+    // persistStateToLocalStorage();
     // if (currentQuestion.id === QUESTION_SHARE_DATA().id) {
     //   trackEvent([
     //     ...TRACKING_EVENTS.DATA_DONATION_CONSENT,
@@ -237,7 +236,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     // }
   };
 
-  const onChecked = (item: any, options: any[], isSelected: boolean) => {
+  const onChecked = async (item: any, options: any[], isSelected: boolean) => {
     const _options = options.map((option: any) => {
       return {
         ...option,
@@ -249,10 +248,21 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             : option?.checked || false,
       };
     });
-    const _question = { ...currentQuestion, options: _options } as Question;
-    setCurrentQuestion(_question);
-  };
 
+    const _question = {
+      ...currentQuestion,
+      options: _options,
+    } as Question;
+    setCurrentQuestion(_question);
+    // persistQuestionToLocalStorage(_question);
+  };
+  // const getDataQuestion = async () => {
+  //   const availableQuestion = await handleStorage.getItem(
+  //     LOCAL_STORAGE_KEYS.QUESTION
+  //   );
+  //   return availableQuestion;
+  //   // setCurrentQuestion(JSON.parse(availableQuestion));
+  // };
   const renderAnswer = () => {
     switch (currentQuestion?.type) {
       case 'select': {
@@ -261,6 +271,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             options={currentQuestion?.options as any[]}
             onChecked={onChecked}
             isSelected={true}
+            // checked={onCheckedAnswer}
           />
         );
       }
@@ -290,7 +301,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         );
       case 'multiselect':
         return (
-          <CheckBoxListComponent
+          <CheckBoxListMultipleComponent
             options={currentQuestion?.options as any[]}
             onChecked={onChecked}
             isSelected={false}
@@ -327,7 +338,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   };
 
   const moveToPreviousStep = async () => {
-    setProgress(questionData?.getProgress());
+    // setProgress(questionData.getProgress());
     if (progress === 0) {
       history.push(`/`, {});
       handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
@@ -335,24 +346,9 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       const { question, answer }: any = questionData?.previousQuestion(
         currentQuestion?.id as string
       );
+      // getDataQuestion();
+      persistStateToLocalStorage();
       setCurrentQuestion(question);
-      setCurrentQuestion(
-        question?.previousQuestion(currentQuestion?.id as string).question
-      );
-      const answers = JSON.parse(
-        (await handleStorage.getItem(LOCAL_STORAGE_KEYS.ANSWERS)) ?? ''
-      );
-      if (answerData && answers) {
-        setAnswerData(answers);
-        persistStateToLocalStorage();
-
-        requestAnimationFrame(() =>
-          setAnswerData({
-            ...answerData,
-            [currentQuestion?.id]: answer as string[],
-          })
-        );
-      }
     }
   };
 
@@ -361,29 +357,22 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       const availableAnswers = await handleStorage.getItem(
         LOCAL_STORAGE_KEYS.ANSWERS
       );
-      // setAnswerData(JSON.parse(JSON.stringify(availableAnswers)));
 
       // return availableAnswers;
+      if (answerData) {
+        setAnswerData(JSON.parse(availableAnswers));
+      } else {
+        return;
+      }
     };
 
-    getData();
-
-    // console.log('available', JSON.parse(JSON.stringify(availableAnswers)));
-    // console.log('available113', availableAnswers);
-    // console.log('available1155', JSON.stringify(availableAnswers));
-    // const answerDataNew = handleObjectStorage.getObject(
-    //   LOCAL_STORAGE_KEYS.ANSWERS
-    // );
-    // console.log('data answer', answerDataNew);
-    // console.log('data answer1', JSON.stringify(answerDataNew));
-    // console.log('data answer2', JSON.parse(JSON.stringify(answerDataNew)));
-
-    // console.log('available1155', JSON.parse(availableAnswers));
+    // getData();
+    // getDataQuestion();
   }, []);
+
   useEffect(() => {
     newQuestionnaire();
   }, [answerData]);
-
   return (
     <View style={styles.container}>
       <HeaderComponents

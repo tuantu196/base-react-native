@@ -7,14 +7,12 @@ export interface Props {
   options: any[];
   isSelected: boolean;
   onChecked: (option: any, options: any[], isSelected: boolean) => void;
-  // checked: () => void;
 }
-const CheckBoxListComponent = ({
+const CheckBoxListMultipleComponent = ({
   isSelected,
   options,
   onChecked,
-}: // checked,
-Props) => {
+}: Props) => {
   const data = options.map((option: any) => {
     return {
       ...option,
@@ -29,8 +27,6 @@ Props) => {
           <CheckBox
             key={index}
             checkedColor={colors.primaryColor}
-            checkedIcon="dot-circle-o"
-            uncheckedIcon="circle-o"
             size={30}
             containerStyle={styles.itemCheck}
             checked={option.checked}
@@ -67,4 +63,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CheckBoxListComponent;
+export default CheckBoxListMultipleComponent;
