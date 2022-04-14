@@ -169,21 +169,19 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         break;
       }
       case 'date': {
-        updateFormData(date);
+        setFormData(currentQuestion?.id as string, date.toString());
         break;
       }
       case 'number': {
-        updateFormData(textAnswer);
+        setFormData(currentQuestion?.id as string, textAnswer);
         break;
       }
       case 'text': {
-        updateFormData(textAnswer);
+        setFormData(currentQuestion?.id as string, textAnswer);
         break;
       }
     }
-    // updateFormData();
     moveToNextStep();
-    console.log('question', currentQuestion);
   };
 
   const currentAnswerValue = (): RawAnswer => {
@@ -340,15 +338,63 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   const moveToPreviousStep = async () => {
     // setProgress(questionData.getProgress());
     if (progress === 0) {
-      history.push(`/`, {});
+      // history.push(`/`, {});
       handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
     } else {
       const { question, answer }: any = questionData?.previousQuestion(
         currentQuestion?.id as string
       );
+      console.log('-------> answer', answer);
+      console.log('-------> question', question);
+      switch (question?.type) {
+        case 'select': {
+          const _options = question.options.map((option: Option) => {
+            return {
+              ...option,
+              checked: option.value === answer,
+            };
+          });
+          const _question = {
+            ...question,
+            options: _options,
+          };
+          console.log('-------> _question', _question);
+          setCurrentQuestion(_question);
+          break;
+        }
+        case 'text': {
+          setTextAnswer(answer);
+          setCurrentQuestion(question);
+          break;
+        }
+        case 'number': {
+          setTextAnswer(answer);
+          setCurrentQuestion(question);
+          break;
+        }
+        case 'date': {
+          setDate(new Date(answer));
+          setCurrentQuestion(question);
+          break;
+        }
+        case 'multiselect': {
+          const _options = question.options.map((option: Option) => {
+            return {
+              ...option,
+              checked: answer.find((a: string) => a === option.value),
+            };
+          });
+          const _question = {
+            ...question,
+            options: _options,
+          };
+          console.log('-------> _question', _question);
+          setCurrentQuestion(_question);
+          break;
+        }
+      }
       // getDataQuestion();
       persistStateToLocalStorage();
-      setCurrentQuestion(question);
     }
   };
 
