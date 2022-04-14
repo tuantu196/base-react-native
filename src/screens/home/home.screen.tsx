@@ -75,8 +75,8 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     setDisable(false);
     setTextAnswer(text);
   };
-  const newQuestionnaire = async () => {
-    await getQuestionnaire('en')
+  const newQuestionnaire = () => {
+    getQuestionnaire('en')
       .then((questionnaire) => {
         questionnaireEngine = new QuestionnaireEngine(questionnaire);
         setQuestionData(questionnaireEngine);
@@ -91,24 +91,16 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
           version: 2,
           timeOfExecution: 23,
         });
-        const previousQuestionId =
-          currentQuestion === undefined ? undefined : currentQuestion.id;
-        setCurrentQuestion(questionnaireEngine.nextQuestion());
-        if (
-          previousQuestionId !== undefined &&
-          currentQuestion?.id !== previousQuestionId
-        ) {
-          setCurrentQuestion(
-            questionnaireEngine.previousQuestion(currentQuestion?.id as string)
-              .question
-          );
-        }
-
-        setProgress(questionnaireEngine.getProgress());
+        previousQuestionId();
+        // setProgress(questionnaireEngine.getProgress());
       })
       .catch(() => {
         // do nothing for now
       });
+  };
+  const previousQuestionId = () => {
+    // currentQuestion === undefined ? undefined : currentQuestion.id;
+    setCurrentQuestion(questionnaireEngine.nextQuestion());
   };
 
   const persistStateToLocalStorage = () => {
@@ -117,7 +109,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       JSON.stringify(answerData)
     );
   };
-
   const setFormData = (key: string, value: string | string[]) => {
     let temp;
     temp = {
@@ -164,58 +155,31 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
         break;
       }
     }
-    moveToNextStep();
+    // moveToNextStep();
   };
-  const moveToNextStep = () => {
-    // try {
-    //   questionData?.setAnswer(
-    //     currentQuestion?.id as string,
-    //     currentAnswerValue()
-    //   );
-    // } catch (error) {
-    //   // this.showErrorBannerHandler();
-    //   console.log(error);
-    //   return;
-    // }
-    // console.log('answer data', answerData);
-    // const nextQuestion = await questionData?.nextQuestion();
-    // // setProgress(questionData.getProgress());
-    // if (nextQuestion === undefined) {
-    //   let answers: any = questionData.getAnswersPersistence();
-    //   if (
-    //     answers.answers.find(
-    //       (q: any) => q.questionId === QUESTION_SHARE_DATA().id
-    //     ).rawAnswer === 'yes'
-    //   ) {
-    //     // User is sharing data
-    //     // donateAnswers(answers);
-    //   }
-    //   history.push(ROUTES.SUMMARY, {});
-    // } else {
-    //   setCurrentQuestion(nextQuestion);
-    //   console.log('enter here', answerData);
-    // }
-    // persistStateToLocalStorage();
-    // if (currentQuestion.id === QUESTION_SHARE_DATA().id) {
-    //   trackEvent([
-    //     ...TRACKING_EVENTS.DATA_DONATION_CONSENT,
-    //     currentAnswerValue === 'yes' ? '1' : '0',
-    //   ]);
-    // }
-    // try {
-    //   window.scrollTo(0, 0);
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  };
-  const currentAnswerValue = (): RawAnswer => {
-    console.log('current question', textAnswer);
+  // const moveToNextStep = () => {
+  //   // setCurrentQuestion(currentQuestion);
+  //   // const question = questionData?.nextQuestion();
+  //   console.log('current answer', currentAnswerValue());
 
-    if (currentQuestion?.id === undefined) {
-      return textAnswer;
-    }
-    return undefined;
-  };
+  //   try {
+  //     questionData?.setAnswer(
+  //       currentQuestion?.id as string,
+  //       currentAnswerValue()
+  //     );
+  //   } catch (error) {
+  //     // this.showErrorBannerHandler();
+  //     console.log(error);
+  //     return;
+  //   }
+  //   setCurrentQuestion(questionData?.nextQuestion());
+  // };
+  // const currentAnswerValue = (): RawAnswer => {
+  //   if (currentQuestion === undefined) {
+  //     return undefined;
+  //   }
+  //   return answerData[currentQuestion?.id];
+  // };
 
   const onChecked = async (item: any, options: any[], isSelected: boolean) => {
     const _options = options.map((option: any) => {
@@ -369,6 +333,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       persistStateToLocalStorage();
     }
   };
+  // console.log('current data', answerData);
 
   useEffect(() => {
     const getData = async () => {

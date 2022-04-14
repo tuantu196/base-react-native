@@ -58,12 +58,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: colors.light_gray,
-    height: 60,
     borderWidth: 1,
     marginBottom: 10,
     borderRadius: 20,
     backgroundColor: colors.white,
-    paddingVertical: 5,
+    paddingVertical: 20,
+    paddingRight: 50,
   },
 });
 
