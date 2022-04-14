@@ -19,7 +19,7 @@ import CheckboxList from 'rn-checkbox-list';
 import { Item } from 'react-native-paper/lib/typescript/components/List/List';
 import { counterSlice } from 'src/redux/counter/slice';
 import api from 'src/services/apisauce';
-import { LOCAL_STORAGE_KEYS, ROUTES } from 'src/utils/constants';
+import { LOCAL_STORAGE_KEYS } from 'src/utils/constants';
 import { QuestionnaireEngine, RawAnswer } from 'src/utils/questionnaireEngine';
 import { handleObjectStorage, handleStorage } from 'src/utils/storage';
 import { Option, Question } from 'src/utils/type';
@@ -39,6 +39,7 @@ import HeaderComponents from './components/header';
 import { RouterHistory } from 'src/utils/typeRouteHistory';
 import { json } from 'stream/consumers';
 import CheckBoxListMultipleComponent from './components/check.box.list.multiple';
+import Descriptions from './components/description';
 
 type Props = {
   navigation: any;
@@ -55,27 +56,30 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   const [answerData, setAnswerData] = useState<{
     [key: string]: any | undefined;
   }>({});
-  var history: RouterHistory;
   const [questionData, setQuestionData] = useState<QuestionnaireEngine>();
   const [currentQuestion, setCurrentQuestion] = useState<Question>();
   const [progress, setProgress] = useState<number>(0.01);
   const [date, setDate] = useState(new Date());
   const [textAnswer, setTextAnswer] = useState('');
   const [show, setShow] = useState(false);
+  const [disable, setDisable] = useState(true);
   const onChangeDate = (selectedDate: any) => {
     setShow(false);
     setDate(selectedDate);
+    setDisable(false);
   };
   const onOpenDatePicker = () => {
     setShow(true);
   };
-
+  const onChangeTextAnswer = (text: any) => {
+    setDisable(false);
+    setTextAnswer(text);
+  };
   const newQuestionnaire = async () => {
     await getQuestionnaire('en')
       .then((questionnaire) => {
         questionnaireEngine = new QuestionnaireEngine(questionnaire);
         setQuestionData(questionnaireEngine);
-        // TODO:https://github.com/CovOpen/CovQuestions/issues/148
         questionnaireEngine.setAnswersPersistence({
           answers: Object.keys(answerData).reduce((accumulator, key) => {
             accumulator.push({
@@ -87,12 +91,9 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
           version: 2,
           timeOfExecution: 23,
         });
-        // debugger;
         const previousQuestionId =
           currentQuestion === undefined ? undefined : currentQuestion.id;
         setCurrentQuestion(questionnaireEngine.nextQuestion());
-        // Go back to previous Question if language is changed
-        // TODO: https://github.com/CovOpen/CovQuestions/issues/190
         if (
           previousQuestionId !== undefined &&
           currentQuestion?.id !== previousQuestionId
@@ -116,24 +117,7 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       JSON.stringify(answerData)
     );
   };
-  // const persistQuestionToLocalStorage = (_question: any) => {
-  //   handleStorage.setItem(
-  //     LOCAL_STORAGE_KEYS.QUESTION,
-  //     JSON.stringify(_question)
-  //   );
-  //   console.log('_question', _question);
-  // };
-  const updateFormData = (event: any) => {
-    const { detail } = event;
 
-    if (currentQuestion?.type === 'date') {
-      // Calculate Custom Timestamp
-      // TODO: https://github.com/CovOpen/CovQuestions/issues/143
-      event.value = event.value / 1000;
-    }
-    setTextAnswer('');
-    setFormData(currentQuestion?.id as string, event.value);
-  };
   const setFormData = (key: string, value: string | string[]) => {
     let temp;
     temp = {
@@ -146,7 +130,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   };
 
   const submitForm = () => {
-    // (event.target as HTMLInputElement).querySelector('input')?.focus();
     switch (currentQuestion?.type) {
       case 'select': {
         const answer = currentQuestion.options?.find(
@@ -183,14 +166,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     }
     moveToNextStep();
   };
-
-  const currentAnswerValue = (): RawAnswer => {
-    if (currentQuestion === undefined) {
-      return undefined;
-    }
-    return answerData[currentQuestion.id];
-  };
-
   const moveToNextStep = () => {
     // try {
     //   questionData?.setAnswer(
@@ -233,6 +208,14 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
     //   console.log(error);
     // }
   };
+  const currentAnswerValue = (): RawAnswer => {
+    console.log('current question', textAnswer);
+
+    if (currentQuestion?.id === undefined) {
+      return textAnswer;
+    }
+    return undefined;
+  };
 
   const onChecked = async (item: any, options: any[], isSelected: boolean) => {
     const _options = options.map((option: any) => {
@@ -252,15 +235,8 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       options: _options,
     } as Question;
     setCurrentQuestion(_question);
-    // persistQuestionToLocalStorage(_question);
+    setDisable(false);
   };
-  // const getDataQuestion = async () => {
-  //   const availableQuestion = await handleStorage.getItem(
-  //     LOCAL_STORAGE_KEYS.QUESTION
-  //   );
-  //   return availableQuestion;
-  //   // setCurrentQuestion(JSON.parse(availableQuestion));
-  // };
   const renderAnswer = () => {
     switch (currentQuestion?.type) {
       case 'select': {
@@ -269,7 +245,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             options={currentQuestion?.options as any[]}
             onChecked={onChecked}
             isSelected={true}
-            // checked={onCheckedAnswer}
           />
         );
       }
@@ -282,7 +257,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
                 placeholder={'DD/MM/YYYY'}
                 onTouchStart={onOpenDatePicker}
                 editable={false}
-                // style={styles.datePicker}
               />
               <DatePicker
                 modal
@@ -311,7 +285,9 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             <TextInput
               placeholder={'Your answer'}
               value={textAnswer}
-              onChangeText={setTextAnswer}
+              onChangeText={(text) => {
+                onChangeTextAnswer(text);
+              }}
               keyboardType={'numeric'}
             />
           </View>
@@ -322,7 +298,9 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             <TextInput
               placeholder={'Your answer'}
               value={textAnswer}
-              onChangeText={setTextAnswer}
+              onChangeText={(text) => {
+                onChangeTextAnswer(text);
+              }}
             />
           </View>
         );
@@ -336,16 +314,12 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
   };
 
   const moveToPreviousStep = async () => {
-    // setProgress(questionData.getProgress());
     if (progress === 0) {
-      // history.push(`/`, {});
       handleStorage.removeItem(LOCAL_STORAGE_KEYS.ANSWERS);
     } else {
       const { question, answer }: any = questionData?.previousQuestion(
         currentQuestion?.id as string
       );
-      console.log('-------> answer', answer);
-      console.log('-------> question', question);
       switch (question?.type) {
         case 'select': {
           const _options = question.options.map((option: Option) => {
@@ -358,7 +332,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             ...question,
             options: _options,
           };
-          console.log('-------> _question', _question);
           setCurrentQuestion(_question);
           break;
         }
@@ -388,7 +361,6 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
             ...question,
             options: _options,
           };
-          console.log('-------> _question', _question);
           setCurrentQuestion(_question);
           break;
         }
@@ -403,37 +375,40 @@ const HomeScreen: React.FC<Props> = memo(({ route }) => {
       const availableAnswers = await handleStorage.getItem(
         LOCAL_STORAGE_KEYS.ANSWERS
       );
-
-      // return availableAnswers;
       if (answerData) {
         setAnswerData(JSON.parse(availableAnswers));
       } else {
         return;
       }
     };
-
-    // getData();
-    // getDataQuestion();
+    getData();
   }, []);
 
   useEffect(() => {
     newQuestionnaire();
+    setDisable(true);
   }, [answerData]);
   return (
     <View style={styles.container}>
-      <HeaderComponents
-        question={currentQuestion?.text as string}
-        onPress={moveToPreviousStep}
-      />
+      <View style={{ marginTop: 20 }}>
+        <HeaderComponents
+          question={currentQuestion?.text as string}
+          onPress={moveToPreviousStep}
+        />
+        <Space size={20} />
+        <Descriptions
+          description={currentQuestion?.text as string}
+          onPress={moveToPreviousStep}
+        />
+      </View>
+
       {renderAnswer()}
       <Button
         onPress={() => {
           submitForm();
         }}
         title="Next"
-        disabled={
-          !currentQuestion?.optional && currentAnswerValue === undefined
-        }
+        disabled={disable}
         style={{
           marginHorizontal: 20,
           marginBottom: 50,
@@ -448,8 +423,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-evenly',
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
   },
   page: {
     justifyContent: 'center',
@@ -470,6 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 25,
     backgroundColor: '#fff',
+    marginHorizontal: 20,
   },
 });
 

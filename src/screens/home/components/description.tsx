@@ -4,34 +4,29 @@ import { Icon } from 'react-native-elements';
 import TextRegular from 'src/components/TextRegular';
 
 export interface Props {
-  question: string;
+  description: string;
   onPress: () => void;
 }
 
-export const HeaderComponents = ({ question, onPress }: Props) => {
+export const Descriptions = ({ description, onPress }: Props) => {
   return (
     <View style={styles.container}>
-      <Icon
-        name={'chevron-left'}
-        size={30}
-        tvParallaxProperties={undefined}
-        onPress={onPress}
-      />
-      <Text style={styles.text}>{question}</Text>
+      <Text style={styles.text}>{description}</Text>
     </View>
   );
 };
 
-export default HeaderComponents;
+export default Descriptions;
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingRight: 20,
+    paddingLeft: 50,
   },
   text: {
-    color: 'black',
-    fontSize: 20,
+    fontSize: 16,
+    color: 'gray',
   },
 });

@@ -420,6 +420,7 @@ export interface LogicVariable {
  * Option for multi-select questions.
  */
 export interface Option {
+  checked: boolean;
   [x: string]: boolean;
   /**
    * Human-Readable formulation of this option as yes/no question.
